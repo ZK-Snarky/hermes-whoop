@@ -83,6 +83,11 @@ Non-fetch operations and an empty archive can have a null `fetched_at`.
 - `trend(kind="recovery", days=7, compare_days=7, end=None, refresh=True)`:
   adjacent-window averages, sample counts and deltas. No inferred zeros.
 - `begin_auth()`, `complete_auth(callback_url)`: headless OAuth authorization.
+- `cancel_auth()`: clears only pending OAuth state under the shared auth lock;
+  does not contact WHOOP or change existing tokens or archived data. Returns
+  `data={"cancelled": true}`, including when no flow is pending. A cancelled
+  callback returns `auth_session_expired`; call `begin_auth()` to start again.
+  Cancellation needs no client credentials and is distinct from `revoke()`.
 - `doctor(online=False)`, `capabilities()`: setup and agent self-discovery.
 - `revoke()`: requests provider revocation, then clears tokens and pending
   OAuth state only on success. Keeps local health data.

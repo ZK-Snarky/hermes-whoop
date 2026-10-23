@@ -94,6 +94,43 @@ class ConnectorTests(unittest.TestCase):
         self.now += 601
         self.assertEqual(self.service.complete_auth(base)["error"]["code"], "auth_session_expired")
 
+    def test_cancel_auth_blocks_replay_preserves_connection_and_allows_restart(self):
+        self.http.responses.append({"records": [record("recovery")]})
+        self.assertTrue(self.service.fetch(kinds=["recovery"])["success"])
+        url = self.service.begin_auth()["data"]["authorization_url"]
+        state = urllib.parse.parse_qs(urllib.parse.urlsplit(url).query)["state"][0]
+        callback = self.service.redirect_uri + "?code=example-code&state=" + state
+        root = Path(self.temp.name)
+        preserved = {path: path.read_bytes() for path in
+                     [root / "tokens.json", root / "archive.sqlite3", *root.joinpath("raw").glob("*.json")]}
+        # A separate app request can cancel using the same store, without credentials.
+        cancellation = WhoopService(self.temp.name, client_id="", client_secret="", opener=self.http)
+        for _ in range(2):
+            self.assertEqual(cancellation.cancel_auth(), {"success": True, "data": {"cancelled": True},
+                "fetched_at": None, "stale": False, "error": None})
+        self.assertEqual(self.service.store.read_json("oauth.json"), {})
+        self.assertEqual(self.service.complete_auth(callback)["error"],
+                         {"code": "auth_session_expired", "recovery": "restart_authorization"})
+        self.assertEqual(len(self.http.requests), 1)
+        self.assertEqual({path: path.read_bytes() for path in preserved}, preserved)
+        self.assertEqual(self.service.status()["data"]["auth_state"], "connected")
+        url = self.service.begin_auth()["data"]["authorization_url"]
+        state = urllib.parse.parse_qs(urllib.parse.urlsplit(url).query)["state"][0]
+        self.http.responses.append({"access_token": "restarted-access", "refresh_token": "restarted-refresh", "expires_in": 3600})
+        self.assertTrue(self.service.complete_auth(self.service.redirect_uri + "?code=new-code&state=" + state)["success"])
+        self.assertTrue(self.service.get_latest("recovery", refresh_if_stale=False)["success"])
+        self.assertEqual(len(self.http.requests), 2)
+
+    def test_cancel_auth_storage_failure_keeps_pending_callback_usable(self):
+        url = self.service.begin_auth()["data"]["authorization_url"]
+        state = urllib.parse.parse_qs(urllib.parse.urlsplit(url).query)["state"][0]
+        with patch.object(self.service.store, "write_json", side_effect=OSError("synthetic write failure")):
+            answer = self.service.cancel_auth()
+        self.assertFalse(answer["success"])
+        self.assertEqual(answer["error"], {"code": "local_storage_error", "recovery": "check_private_data_dir"})
+        self.http.responses.append({"access_token": "new-test-access", "refresh_token": "new-test-refresh", "expires_in": 3600})
+        self.assertTrue(self.service.complete_auth(self.service.redirect_uri + "?code=example-code&state=" + state)["success"])
+
     def test_refresh_on_401_persists_rotation_and_fetches(self):
         self.http.responses += [failure(401), {"access_token": "rotated-access", "refresh_token": "rotated-refresh", "expires_in": 3600}, {"records": [record("recovery")]}]
         answer = self.service.get_latest("recovery")
