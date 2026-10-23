@@ -177,6 +177,13 @@ class WhoopService:
         return result({"authorization_url": AUTH_URL + "?" + query, "expires_at": iso(self.clock() + 600), "callback_mode": "paste_redirect_url"})
 
     @operation
+    def cancel_auth(self):
+        """Invalidate pending authorization without disconnecting an existing grant."""
+        with self.store.lock():
+            self.store.write_json("oauth.json", {})
+        return result({"cancelled": True})
+
+    @operation
     def complete_auth(self, callback_url):
         expected = self._validate_redirect()
         callback = urllib.parse.urlsplit(callback_url.strip())
