@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "hermes-whoop"
+version = "0.1.0"
+description = "Private WHOOP archive, reliable OAuth, and health tools for Hermes"
+requires-python = ">=3.11"
+license = "MIT"
+license-files = ["LICENSE", "THIRD_PARTY_NOTICES.md"]
+readme = "README.md"
+authors = [{name = "hermes-whoop contributors"}]
+dependencies = []
+
+[project.scripts]
+hermes-whoop = "hermes_whoop.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["hermes_whoop*"]

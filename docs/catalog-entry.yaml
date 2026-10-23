@@ -1,0 +1,19 @@
+# Draft only. Replace sha with the verified public release commit before submission.
+name: hermes-whoop
+title: WHOOP
+repo: https://github.com/ZK-Snarky/hermes-whoop
+sha: REPLACE_WITH_VERIFIED_RELEASE_COMMIT
+version: "0.1.0"
+description: "Direct WHOOP OAuth, private SQLite and raw JSON archive, resumable backfill, freshness guards, recovery/sleep trends and health tools. No hosted relay."
+maintainer: ZK-Snarky
+tier: community
+category: tools
+docs_url: https://github.com/ZK-Snarky/hermes-whoop#readme
+requires_hermes: ">=0.22.0,<0.23.0"
+readme: true
+platforms: []
+capabilities:
+  provides_tools: [whoop_capabilities, whoop_status, whoop_doctor, whoop_auth_url, whoop_callback, whoop_refresh, whoop_fetch, whoop_backfill, whoop_latest, whoop_list, whoop_get, whoop_daily_summary, whoop_weekly_summary, whoop_trend, whoop_self_heal, whoop_revoke]
+  provides_hooks: []
+  provides_middleware: []
+  requires_env: []

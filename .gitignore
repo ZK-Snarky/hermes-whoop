@@ -1,0 +1,13 @@
+.research/
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.venv/
+.pytest_cache/
+.env*
+tokens.json
+*.sqlite*
+*.db
+raw/

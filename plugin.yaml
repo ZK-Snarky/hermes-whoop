@@ -1,0 +1,40 @@
+name: hermes-whoop
+version: 0.1.0
+manifest_version: 2
+api_version: 1
+requires_hermes: ">=0.22.0,<0.23.0"
+description: "Private WHOOP archive, headless OAuth, recovery, sleep, activity and trends."
+author: hermes-whoop contributors
+kind: standalone
+license: MIT
+homepage: https://github.com/ZK-Snarky/hermes-whoop
+tags: [whoop, health, fitness, local-first]
+requires_env: []
+optional_env:
+  - WHOOP_CLIENT_ID
+  - WHOOP_CLIENT_SECRET
+  - WHOOP_REDIRECT_URI
+  - WHOOP_DATA_DIR
+  - WHOOP_TIMEZONE
+  - WHOOP_PRIVACY_MODE
+config_schema:
+  data_dir: {type: str, default: "", description: "Private archive directory; default follows the active Hermes profile."}
+  timezone: {type: str, default: "", description: "IANA timezone for summaries and step dates; environment or UTC by default."}
+  privacy: {type: str, default: "", description: "Tool output: summary, structured, or raw; environment or summary by default."}
+provides_tools:
+  - whoop_capabilities
+  - whoop_status
+  - whoop_doctor
+  - whoop_auth_url
+  - whoop_callback
+  - whoop_refresh
+  - whoop_fetch
+  - whoop_backfill
+  - whoop_latest
+  - whoop_list
+  - whoop_get
+  - whoop_daily_summary
+  - whoop_weekly_summary
+  - whoop_trend
+  - whoop_self_heal
+  - whoop_revoke
