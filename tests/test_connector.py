@@ -15,7 +15,7 @@ import urllib.parse
 from hermes_whoop import WhoopService
 from hermes_whoop.common import iso, parse_time
 from hermes_whoop.http import retry_delay
-from hermes_whoop.plugin import TOOLS, register
+from hermes_whoop.plugin import TOOLS, make_service, register
 
 NOW = parse_time("2026-01-15T12:00:00Z").timestamp()
 TOKEN = {"access_token": "test-access", "refresh_token": "test-refresh", "expires_at": NOW + 3600,
@@ -273,6 +273,43 @@ class ConnectorTests(unittest.TestCase):
             self.assertEqual(answer["data"]["score"]["recovery_score"], 78)
             self.assertEqual(len(ctx.tools), len(TOOLS))
             self.assertTrue(ctx.skill.exists())
+
+    def test_plugin_settings_reload_preserves_canonical_token_store(self):
+        class Context:
+            def __init__(self, data_dir):
+                self.settings = {"data_dir": data_dir, "timezone": "UTC", "privacy": "structured"}
+                self.tools = {}
+            def get_config(self, key, default=None):
+                return self.settings.get(key, default)
+            def register_tool(self, **spec):
+                self.tools[spec["name"]] = spec["handler"]
+            def register_skill(self, name, path):
+                pass
+        ctx = Context(self.temp.name)
+        token_file = Path(self.temp.name) / "tokens.json"
+        original_tokens = token_file.read_bytes()
+        with patch("hermes_whoop.plugin.make_service", wraps=make_service) as factory, patch("hermes_whoop.http.HTTP.request") as network:
+            register(ctx)
+            status = lambda: json.loads(ctx.tools["whoop_status"]({}))
+            self.assertTrue(status()["data"]["token_present"])
+            self.assertTrue(status()["success"])
+            self.assertEqual(factory.call_count, 1)
+
+            ctx.settings["timezone"] = "America/New_York"
+            self.assertEqual(status()["data"]["timezone"], "America/New_York")
+            ctx.settings["privacy"] = "summary"
+            self.assertEqual(status()["data"]["privacy"], "summary")
+            self.assertEqual(factory.call_count, 3)
+            self.assertEqual(token_file.read_bytes(), original_tokens)
+
+            ctx.settings["data_dir"] = str(Path(self.temp.name) / "separate")
+            self.assertFalse(status()["data"]["token_present"])
+            ctx.settings["data_dir"] = self.temp.name
+            self.assertTrue(status()["data"]["token_present"])
+            self.assertEqual(factory.call_count, 5)
+            self.assertEqual(token_file.read_bytes(), original_tokens)
+            self.assertFalse((Path(self.temp.name) / "separate" / "tokens.json").exists())
+            network.assert_not_called()
 
     def test_doctor_exact_fix_and_no_secret_disclosure(self):
         self.service.client_id = None

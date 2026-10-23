@@ -52,10 +52,13 @@ TOOLS = [
 
 def register(ctx):
     service = None
+    service_settings = None
     def get_service():
-        nonlocal service
-        if service is None:
-            service = make_service(ctx.get_config("data_dir"), timezone=ctx.get_config("timezone"), privacy=ctx.get_config("privacy"))
+        nonlocal service, service_settings
+        settings = tuple(ctx.get_config(key) for key in ("data_dir", "timezone", "privacy"))
+        if service is None or settings != service_settings:
+            service = make_service(settings[0], timezone=settings[1], privacy=settings[2])
+            service_settings = settings
         return service
 
     def handler(method, defaults):
