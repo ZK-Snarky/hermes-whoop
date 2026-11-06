@@ -2,7 +2,7 @@ name: hermes-whoop
 version: 0.1.0
 manifest_version: 2
 api_version: 1
-requires_hermes: ">=0.22.0,<0.23.0"
+requires_hermes: ">=0.22.0,<0.24.0"
 description: "Private WHOOP archive, headless OAuth, recovery, sleep, activity and trends."
 author: hermes-whoop contributors
 kind: standalone
