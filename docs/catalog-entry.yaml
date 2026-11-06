@@ -9,7 +9,7 @@ maintainer: ZK-Snarky
 tier: community
 category: tools
 docs_url: https://github.com/ZK-Snarky/hermes-whoop#readme
-requires_hermes: ">=0.22.0,<0.23.0"
+requires_hermes: ">=0.22.0,<0.24.0"
 readme: true
 platforms: []
 capabilities:
